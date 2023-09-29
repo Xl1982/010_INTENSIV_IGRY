@@ -128,3 +128,14 @@ class MyGame(arcade.Window):
                             self.width + self.view_left,
                             self.view_bottom,
                             self.height + self.view_bottom)
+
+    def on_update(self, delta_time: float):
+        self.physics_engine.update()
+        self.player_light.position = self.player_sprite.position
+        self.scroll_screen()
+
+
+if __name__ == "__main__":
+    window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    window.setup()
+    arcade.run()
