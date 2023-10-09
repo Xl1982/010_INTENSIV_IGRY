@@ -1,3 +1,5 @@
+from datetime import time, datetime
+
 import arcade
 from arcade.experimental.lights import Light, LightLayer
 
@@ -6,7 +8,7 @@ SCREEN_HEIGHT = 768
 SCREEN_TITLE = 'Light'
 VIEWPORT_MARGIN = 200 # зазор в пикселях при котором будет экран двигаться
 MOVEMENT_SPEED = 5
-
+count = datetime.now(tz=None)
 AMBIENT_COLOR = (10, 10, 10)
 
 class MyGame(arcade.Window):
@@ -73,7 +75,7 @@ class MyGame(arcade.Window):
             self.player_list.draw()
 
         self.light_layer.draw(ambient_color=AMBIENT_COLOR)
-        arcade.draw_text("Нажми пробел - вкл фонарик",
+        arcade.draw_text(f"{count}",
                          100 + self.view_left, 100 + self.view_bottom,
                          arcade.color.WHITE, 20)
 
