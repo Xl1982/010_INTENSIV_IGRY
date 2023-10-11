@@ -16,7 +16,7 @@ pygame.init()
 screen = pygame.display.set_mode(SIZE)
 
 running = True
-rect = Rect(100, 50, 50, 50)
+rect = Rect(50, 60, 200, 80)
 n = 50
 
 def draw_text(text, pos):

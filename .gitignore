@@ -1,1 +1,7 @@
+.gitignore
+/main.dist
+/resources
+/36
+/venv
+main.build
 /desktop.ini
