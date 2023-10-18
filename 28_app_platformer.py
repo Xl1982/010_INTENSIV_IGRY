@@ -13,7 +13,7 @@ PLAYER_MOVEMENT_SPEED = 5
 GRAVITY = 2
 PLAYER_JUMP_SPEED = 20
 
-
+print('Hello')
 class Player(arcade.Sprite):
     def __init__(self):
         super().__init__(
