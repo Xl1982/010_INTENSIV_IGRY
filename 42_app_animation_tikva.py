@@ -8,12 +8,15 @@ is_walk = False
 left = right = False
 MOVE_SPEED = 7
 
+
+
 class MySprite(pygame.sprite.Sprite):
     def __init__(self):
         super(MySprite, self).__init__()
         self.xvel = 0
         self.images = []
-        self.images.append(pygame.image.load('resources/images/walk1.png'))
+
+        self.images.append(pygame.image.load('resources/images/walk1.png')) #index 0
         self.images.append(pygame.image.load('resources/images/walk2.png'))
         self.images.append(pygame.image.load('resources/images/walk3.png'))
         self.images.append(pygame.image.load('resources/images/walk4.png'))
@@ -28,13 +31,17 @@ class MySprite(pygame.sprite.Sprite):
         self.image = self.images[self.index]
         self.rect = pygame.Rect(5, 5, 150, 198)
 
+
     def update(self):
         if is_walk:
             self.rect.x += self.xvel
             self.index += 1
+
             if self.index >= len(self.images):
                 self.index = 0
+
         self.image = self.images[self.index]
+
         if left:
             self.xvel = -MOVE_SPEED
             self.image = pygame.transform.flip(self.image, True, False)
