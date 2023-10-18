@@ -1,104 +1,107 @@
-import arcade
+"""
+An example of the determinism of pymunk by coloring balls according to their
+position, and then respawning them to verify each ball ends up in the same
+place. Inspired by Pymunk user Nam Dao.
+"""
 
-WIN_WIDTH = 800
-WIN_HEIGHT = 640
-BACKGROUND_COLOR = arcade.csscolor.DIM_GRAY
-PLATFORM_WIDTH = 32
-PLATFORM_HEIGHT = 32
-PLATFORM_COLOR = arcade.csscolor.RED
-MOVE_SPEED = 7
-PLAYER_WIDTH = 22
-PLAYER_HEIGHT = 32
-PLAYER_COLOR = arcade.csscolor.INDIANRED
-JUMP_POWER = 20
-GRAVITY = 2
 
-class Player(arcade.Sprite):
-    def __init__(self, x, y):
-        super().__init__()
+import random
 
-        self.texture = arcade.make_soft_square_texture(PLAYER_WIDTH, PLAYER_COLOR, outer_alpha=255)
-        self.center_x = x
-        self.center_y = y
-        self.change_x = 0
-        self.change_y = 0
+import pygame
 
-class Platform(arcade.Sprite):
-    def __init__(self, x, y):
-        super().__init__()
+import pymunk
+import pymunk.pygame_util
 
-        self.texture = arcade.make_soft_square_texture(PLATFORM_WIDTH, PLATFORM_COLOR, outer_alpha=255)
-        self.center_x = x
-        self.center_y = y
 
-class GameWindow(arcade.Window):
-    def __init__(self):
-        super().__init__(WIN_WIDTH, WIN_HEIGHT, "Platformer with Arcade")
+def new_space(color_dict):
+    space = pymunk.Space()
+    space.gravity = 0, 900
+    static_body = space.static_body
+    walls = [
+        pymunk.Segment(static_body, (20, -50), (0, 600), 20),
+        pymunk.Segment(static_body, (0, 600), (600, 600), 20),
+        pymunk.Segment(static_body, (600, 600), (580, -50), 20),
+        # pymunk.Segment(static_body, (600, 0), (20, 0), 20),
+        pymunk.Segment(static_body, (250, 300), (600, 150), 3),
+    ]
 
-        self.player = None
-        self.platform_list = None
-        self.physics_engine = None
+    space.add(*walls)
 
-        arcade.set_background_color(BACKGROUND_COLOR)
+    random.seed(0)
+    for i in range(800):
+        body = pymunk.Body()
+        x = random.randint(270, 450)
+        y = random.randint(30, 100)
+        body.position = x, y
+        shape = pymunk.Circle(body, 6)
+        shape.mass = 1
+        shape.data = i
+        if color_dict != None and i in color_dict:
+            shape.color = color_dict[i]
+        space.add(body, shape)
 
-    def setup(self):
-        self.player = Player(50, 50)
-        self.platform_list = arcade.SpriteList()
+    return space
 
-        level = [
-            "-------------------------",
-            "-                       -",
-            "-                       -",
-            "-    ---                -",
-            "-      ---              -",
-            "-          ---          -",
-            "-                 ---   -",
-            "-                       -",
-            "-       ---             -",
-            "-     ---               -",
-            "-                       -",
-            "-  ---                  -",
-            "                        -",
-            "-                       -",
-            "-------------------------"
-        ]
 
-        x = y = 0
-        for row in level:
-            for col in row:
-                if col == "-":
-                    platform = Platform(x + PLATFORM_WIDTH / 2, y + PLATFORM_HEIGHT / 2)
-                    self.platform_list.append(platform)
-                x += PLATFORM_WIDTH
-            y += PLATFORM_HEIGHT
-            x = 0
+pygame.init()
+screen = pygame.display.set_mode((600, 600))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont("Arial", 14)
+text = font.render(
+    "Press r to reset and respawn all balls."
+    " Press c to set color of each ball according to its position.",
+    True,
+    pygame.Color("gray"),
+)
+draw_options = pymunk.pygame_util.DrawOptions(screen)
 
-        self.physics_engine = arcade.PhysicsEnginePlatformer(
-            self.player, self.platform_list, gravity_constant=GRAVITY
-        )
+color_dict = None
+space = pymunk.Space()
 
-    def on_draw(self):
-        arcade.start_render()
-        self.platform_list.draw()
-        self.player.draw()
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            exit()
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            exit()
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+            pygame.image.save(screen, "colors.png")
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+            space = new_space(color_dict)
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+            color_dict = {}
+            for shape in space.shapes:
+                if not isinstance(shape, pymunk.Circle):
+                    continue
+                r = shape.body.position.x / 600 * 255
+                g = max((shape.body.position.y - 400) / 200 * 255, 0)
+                if r < 0 or r > 255 or g < 0 or g > 255:
+                    print(shape.body.position)
+                    exit()
+                shape.color = (r, g, 150, 255)
+                color_dict[shape.data] = shape.color
 
-    def update(self, delta_time):
-        self.physics_engine.update()
+    ### Update physics
+    dt = 1.0 / 60.0
+    for _ in range(5):
+        space.step(dt / 5)
 
-    def on_key_press(self, key, modifiers):
-        if key == arcade.key.LEFT:
-            self.player.change_x = -MOVE_SPEED
-        elif key == arcade.key.RIGHT:
-            self.player.change_x = MOVE_SPEED
-        elif key == arcade.key.UP:
-            if self.physics_engine.can_jump():
-                self.player.change_y = JUMP_POWER
+    ### Draw stuff
+    screen.fill(pygame.Color("black"))
 
-    def on_key_release(self, key, modifiers):
-        if key == arcade.key.LEFT or key == arcade.key.RIGHT:
-            self.player.change_x = 0
+    # space.debug_draw(draw_options)
+    color = pygame.Color("blue")
+    for shape in space.shapes:
+        if not isinstance(shape, pymunk.Circle):
+            continue
+        if hasattr(shape, "color"):
+            color = shape.color
+        # Draw the circles with a little larger size (radius) then their
+        # actual size to make it look nicer without gaps between circles.
+        pygame.draw.circle(screen, color, shape.body.position, shape.radius + 4)
+    screen.blit(text, (25, 2))
 
-if __name__ == "__main__":
-    window = GameWindow()
-    window.setup()
-    arcade.run()
+    ### Flip screen
+    pygame.display.flip()
+    clock.tick(50)
+    pygame.display.set_caption("fps: " + str(clock.get_fps()))

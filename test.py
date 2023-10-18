@@ -1,9 +1,8 @@
-
 import arcade
 from arcade.experimental.lights import Light, LightLayer
 
-SCREEN_WIDTH = 1024
-SCREEN_HEIGHT = 768
+SCREEN_WIDTH = 900
+SCREEN_HEIGHT = 600
 SCREEN_TITLE = "Lighting Demo"
 VIEWPORT_MARGIN = 200
 MOVEMENT_SPEED = 5
@@ -135,6 +134,10 @@ class MyGame(arcade.Window):
         color = arcade.csscolor.BLUE
         light = Light(x, y, radius, color, mode)
         self.light_layer.add(light)
+
+
+
+
         radius = 150
         mode = 'soft'
         color = arcade.csscolor.WHITE
